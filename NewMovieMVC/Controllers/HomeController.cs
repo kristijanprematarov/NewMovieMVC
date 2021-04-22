@@ -40,7 +40,85 @@ namespace NewMovieMVC.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var movie = await GetMovieWithId(id);
+
+            return View(movie);
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
+        {
+            var movie = await GetMovieWithId(id);
+
+            return View(movie);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(MovieViewModel movieModel)
+        {
+            var statusCode = string.Empty;
+
+            var movieJson = JsonConvert.SerializeObject(movieModel);
+
+            using (var httpClient = new HttpClient())
+            {
+                HttpContent movie = new StringContent(movieJson, Encoding.UTF8, "application/json");
+                using (var request = await httpClient.PostAsync("https://localhost:44358/api/movie/film", movie))
+                {
+                    if (request.IsSuccessStatusCode)
+                    {
+                        statusCode += request.StatusCode.ToString();
+                    }
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var movie = await GetMovieWithId(id);
+
+            return View(movie);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(MovieViewModel movieModel)
+        {
+            var statusCode = string.Empty;
+
+            using (var httpClient = new HttpClient())
+            {
+                using (var request = await httpClient.DeleteAsync("https://localhost:44358/api/movie/deleteFilm/" + movieModel.Id.ToString()))
+                {
+                    if (request.IsSuccessStatusCode)
+                    {
+                        statusCode += request.StatusCode.ToString();
+                    }
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        #region GetMovieWithId
+
+        public async Task<MovieViewModel> GetMovieWithId(int id)
         {
             MovieViewModel movie = new MovieViewModel();
 
@@ -55,38 +133,9 @@ namespace NewMovieMVC.Controllers
                 }
             }
 
-            return View(movie);
+            return movie;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Edit(MovieViewModel movieModel)
-        {
-            var statusCode = string.Empty;
-
-            using (var httpClient = new HttpClient())
-            {
-                HttpContent movie = new StringContent(movieModel.ToString(), Encoding.UTF8, "application/json");
-                using (var request = await httpClient.PostAsync("https://localhost:44358/api/movie/film", movie))
-                {
-                    if (request.IsSuccessStatusCode)
-                    {
-                        statusCode += request.StatusCode.ToString();
-                    }
-                }
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        #endregion
     }
 }
